@@ -2,19 +2,14 @@ package main
 
 import (
 	"fmt"
-	"html/template"
-	"net/http"
 	"strconv"
 	"strings"
-)
 
-type Page struct {
-	Input  string
-	Result string
-	Shift  int
-	Lang   string
-	Brute  []string
-}
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
+)
 
 var ruLower = []rune("абвгдеёжзийклмнопрстуфхцчшщъыьэюя")
 var ruUpper = []rune("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
@@ -70,38 +65,82 @@ func bruteForce(text, lang string) []string {
 	return res
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request) {
-	p := &Page{Lang: "ru"}
+func main() {
+	a := app.New()
+	w := a.NewWindow("Шифр Цезаря")
+	w.Resize(fyne.NewSize(1000, 700))
 
-	if r.Method == http.MethodPost {
-		text := r.FormValue("text")
-		shiftStr := r.FormValue("shift")
-		mode := r.FormValue("mode")
-		lang := r.FormValue("lang")
+	input := widget.NewMultiLineEntry()
+	input.Wrapping = fyne.TextWrapWord
 
-		p.Input = text
-		p.Lang = lang
+	output := widget.NewMultiLineEntry()
+	output.Wrapping = fyne.TextWrapWord
 
-		shift, _ := strconv.Atoi(shiftStr)
-		p.Shift = shift
+	shiftEntry := widget.NewEntry()
+
+	langSelect := widget.NewSelect([]string{"ru", "en"}, func(s string) {})
+	langSelect.SetSelected("ru")
+
+	modeSelect := widget.NewSelect([]string{"encrypt", "decrypt", "brute"}, func(s string) {})
+	modeSelect.SetSelected("encrypt")
+
+	runBtn := widget.NewButton("Выполнить", func() {
+		text := input.Text
+		lang := langSelect.Selected
+		mode := modeSelect.Selected
+
+		var result string
+
+		shift := 0
+		if shiftEntry.Text != "" {
+			shiftVal, _ := strconv.Atoi(shiftEntry.Text)
+			shift = shiftVal
+		}
 
 		switch mode {
 		case "encrypt":
-			p.Result = caesar(text, shift, lang, false)
+			result = caesar(text, shift, lang, false)
+
 		case "decrypt":
-			p.Result = caesar(text, shift, lang, true)
+			result = caesar(text, shift, lang, true)
+
 		case "brute":
-			p.Brute = bruteForce(text, lang)
+			lines := bruteForce(text, lang)
+			result = strings.Join(lines, "\n")
 		}
-	}
 
-	t, _ := template.ParseFiles("main.html")
+		output.SetText(result)
+	})
 
-	t.Execute(w, p)
-}
+	inputScroll := container.NewScroll(input)
+	inputScroll.SetMinSize(fyne.NewSize(400, 400))
 
-func main() {
-	http.HandleFunc("/", viewHandler)
-	fmt.Println("http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	outputScroll := container.NewScroll(output)
+	outputScroll.SetMinSize(fyne.NewSize(400, 400))
+
+	left := container.NewVBox(
+		widget.NewLabel("Ввод"),
+		inputScroll,
+		container.NewHBox(
+			widget.NewLabel("Язык"),
+			langSelect,
+			widget.NewLabel("Режим"),
+			modeSelect,
+		),
+		container.NewHBox(
+			widget.NewLabel("Сдвиг"),
+			shiftEntry,
+		),
+		runBtn,
+	)
+
+	right := container.NewVBox(
+		widget.NewLabel("Результат"),
+		outputScroll,
+	)
+
+	content := container.NewAdaptiveGrid(2, left, right)
+
+	w.SetContent(content)
+	w.ShowAndRun()
 }
