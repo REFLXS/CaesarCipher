@@ -17,8 +17,8 @@ var enLower = []rune("abcdefghijklmnopqrstuvwxyz")
 var enUpper = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func shiftRune(r rune, shift int, lower, upper []rune) rune {
-	for i, c := range lower {
-		if r == c {
+	for i, ch := range lower {
+		if r == ch {
 			n := (i + shift) % len(lower)
 			if n < 0 {
 				n += len(lower)
@@ -26,8 +26,9 @@ func shiftRune(r rune, shift int, lower, upper []rune) rune {
 			return lower[n]
 		}
 	}
-	for i, c := range upper {
-		if r == c {
+
+	for i, ch := range upper {
+		if r == ch {
 			n := (i + shift) % len(upper)
 			if n < 0 {
 				n += len(upper)
@@ -35,6 +36,7 @@ func shiftRune(r rune, shift int, lower, upper []rune) rune {
 			return upper[n]
 		}
 	}
+
 	return r
 }
 
@@ -42,23 +44,26 @@ func caesar(text string, shift int, lang string, decrypt bool) string {
 	if decrypt {
 		shift = -shift
 	}
-	var sb strings.Builder
+
+	var result strings.Builder
 	for _, r := range text {
 		if lang == "ru" {
-			sb.WriteRune(shiftRune(r, shift, ruLower, ruUpper))
+			result.WriteRune(shiftRune(r, shift, ruLower, ruUpper))
 		} else {
-			sb.WriteRune(shiftRune(r, shift, enLower, enUpper))
+			result.WriteRune(shiftRune(r, shift, enLower, enUpper))
 		}
 	}
-	return sb.String()
+	return result.String()
 }
 
 func bruteForce(text, lang string) []string {
 	var res []string
 	max := len(enLower)
+
 	if lang == "ru" {
 		max = len(ruLower)
 	}
+
 	for i := 1; i < max; i++ {
 		res = append(res, fmt.Sprintf("%2d. %s", i, caesar(text, i, lang, true)))
 	}
