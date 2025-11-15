@@ -76,10 +76,11 @@ func main() {
 	w.Resize(fyne.NewSize(1000, 700))
 
 	input := widget.NewMultiLineEntry()
-	input.Wrapping = fyne.TextWrapWord
+	input.SetPlaceHolder("Введите текст")
 
 	output := widget.NewMultiLineEntry()
-	output.Wrapping = fyne.TextWrapWord
+	output.SetPlaceHolder("Результат")
+	output.Disable()
 
 	shiftEntry := widget.NewEntry()
 
@@ -117,15 +118,9 @@ func main() {
 		output.SetText(result)
 	})
 
-	inputScroll := container.NewScroll(input)
-	inputScroll.SetMinSize(fyne.NewSize(400, 400))
-
-	outputScroll := container.NewScroll(output)
-	outputScroll.SetMinSize(fyne.NewSize(400, 400))
-
 	left := container.NewVBox(
 		widget.NewLabel("Ввод"),
-		inputScroll,
+		input,
 		container.NewHBox(
 			widget.NewLabel("Язык"),
 			langSelect,
@@ -141,7 +136,7 @@ func main() {
 
 	right := container.NewVBox(
 		widget.NewLabel("Результат"),
-		outputScroll,
+		output,
 	)
 
 	content := container.NewAdaptiveGrid(2, left, right)
